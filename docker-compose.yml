@@ -1,0 +1,132 @@
+version: '3.8'
+
+services:
+  auth_service:
+    build:
+      context: ./auth_service  # Lokasi Dockerfile untuk auth_service
+    container_name: auth_service
+    ports:
+      - "8000:8000" 
+    depends_on:
+      - mongodb
+      - redis
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  user_service:
+    build:
+      context: ./user_service  # Lokasi Dockerfile untuk user_service
+    container_name: user_service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  hello_service:
+    build:
+      context: ./hello_service  # Lokasi Dockerfile untuk hello_service
+    container_name: hello_service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  jurusan_service:
+    build:
+      context: ./jurusan_service  # Lokasi Dockerfile untuk jurusan_service
+    container_name: jurusan_service
+    ports:
+      - "5004:5004"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  kelas_service:
+    build:
+      context: ./kelas_service  # Lokasi Dockerfile untuk kelas_service
+    container_name: kelas_service
+    ports:
+      - "5002:5002"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  materi_service:
+    build:
+      context: ./materi_service  # Lokasi Dockerfile untuk materi_service
+    container_name: materi_service
+    ports:
+      - "5003:5003"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  soal_service:
+    build:
+      context: ./soal_service  # Lokasi Dockerfile untuk soal_service
+    container_name: soal_service
+    ports:
+      - "5005:5005"
+    depends_on:
+      - redis
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db 
+    networks:
+      - app_network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network
+
+  k6:
+    image: grafana/k6
+    volumes:
+      - .:/scripts
+    working_dir: /scripts
+    command: ["run", "/scripts/test.js"]
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:  # Volume untuk MongoDB

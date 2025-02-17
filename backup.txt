@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  auth_service:
+    build:
+      context: ./auth_service  # Lokasi Dockerfile untuk auth_service
+    container_name: auth_service
+    ports:
+      - "8000:8000"  # Pastikan port ini unik jika ada lebih dari satu service
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  user_service:
+    build:
+      context: ./user_service  # Lokasi Dockerfile untuk user_service
+    container_name: user_service
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  hello_service:
+    build:
+      context: ./hello_service  # Lokasi Dockerfile untuk hello_service
+    container_name: hello_service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongodb
+    env_file:
+      - .env
+    networks:
+      - app_network
+
+  mongodb:
+    image: mongo:5.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db  # Menyimpan data MongoDB di volume
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
