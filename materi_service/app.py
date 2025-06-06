@@ -179,6 +179,7 @@ def update_materi(materi_id):
     if not nama_materi or not deskripsi_materi or not kelas_id or not jurusan_id or not deskripsi_kelas:
         return jsonify({'message': 'Semua field harus diisi!'}), 400
 
+    # Validasi kelas
     try:
         kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas/{kelas_id}', headers=get_headers())
         if kelas_response.status_code != 200:
@@ -187,6 +188,7 @@ def update_materi(materi_id):
     except requests.exceptions.RequestException as e:
         return jsonify({'message': str(e)}), 500
 
+    # Validasi jurusan
     try:
         jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan/{jurusan_id}', headers=get_headers())
         if jurusan_response.status_code != 200:
@@ -197,34 +199,36 @@ def update_materi(materi_id):
     if deskripsi_kelas not in kelas_data['deskripsi_kelas']:
         return jsonify({'message': 'Deskripsi kelas tidak valid!'}), 400
 
+    # Ambil file baru
     files = request.files.getlist('pdf_files')
     pdf_file_paths = []
 
-    # Hanya lakukan validasi jika ada file yang diunggah
-    if files and files[0].filename != '':
-        for file in files:
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                file_path = os.path.join('static/uploads/pdf', filename)
-                file.save(file_path)
-                pdf_file_paths.append(file_path)
-            else:
-                return jsonify({'message': 'File tidak valid!'}), 400
+    for file in files:
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join('static/uploads/pdf', filename)
+            file.save(file_path)
+            pdf_file_paths.append(file_path)
+        elif file.filename != '':
+            return jsonify({'message': 'File tidak valid!'}), 400
 
-    # Jika ada file baru, tambahkan ke data update
-    if pdf_file_paths:
-        update_data['pdf_files'] = pdf_file_paths
+    # Ambil data materi lama untuk menyimpan file lama
+    existing_materi = db.materi.find_one({'_id': ObjectId(materi_id)})
+    if not existing_materi:
+        return jsonify({'message': 'Materi tidak ditemukan!'}), 404
 
+    existing_files = existing_materi.get('pdf_files', [])
+    combined_files = existing_files + pdf_file_paths if pdf_file_paths else existing_files
+
+    # Buat data untuk diupdate
     update_data = {
         'nama_materi': nama_materi,
         'deskripsi_materi': deskripsi_materi,
         'kelas_id': kelas_id,
         'deskripsi_kelas': deskripsi_kelas,
         'jurusan_id': jurusan_id,
+        'pdf_files': combined_files
     }
-
-    if pdf_file_paths:
-        update_data['pdf_files'] = pdf_file_paths
 
     result = db.materi.update_one({'_id': ObjectId(materi_id)}, {'$set': update_data})
 

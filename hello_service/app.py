@@ -29,12 +29,13 @@ app.secret_key = 'your-consistent-secret-key'
 CORS(app, supports_credentials=True)
 
 # URL untuk ambil semua DATA.
-
+AUTH_SERVICE_URL = os.getenv('AUTH_SERVICE_URL')
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL')
 KELAS_SERVICE_URL = os.getenv('KELAS_SERVICE_URL')
 MATERI_SERVICE_URL = os.getenv('MATERI_SERVICE_URL')
 JURUSAN_SERVICE_URL = os.getenv('JURUSAN_SERVICE_URL')
 SOAL_SERVICE_URL = os.getenv('SOAL_SERVICE_URL')
+MATERI_SERVICE_URL_PDF = os.getenv('MATERI_SERVICE_URL_PDF')
 # API Token
 API_TOKEN = os.getenv('API_TOKEN')
 
@@ -62,7 +63,7 @@ def login_required(f):
         print(f"Checking login status, user_id: {user_id}")
         if not user_id:
             print("User not logged in, redirecting to login page.")
-            return redirect('http://localhost:8000/')  # URL login dari auth_service
+            return redirect(AUTH_SERVICE_URL)  # URL login dari auth_service
         print("User is logged in, proceeding to requested page.")
         return f(*args, **kwargs)
     return decorated_function
@@ -118,7 +119,7 @@ def index():
 @login_required
 def logout():
     session.clear()
-    return redirect('http://localhost:8000/')  # URL login dari auth_service
+    return redirect(AUTH_SERVICE_URL)  # URL login dari auth_service
 
 #-------------ROUTE UNTUK USER ----------------
 #-----ROUTE UNTUK TAMBAH DATA USER------------
@@ -701,7 +702,52 @@ def detail_materi(m_id):
         return render_template('pages/detail-materi.html', materi=materi, page_name=page_name)
     except requests.exceptions.RequestException as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/openpdf/<filename>')
+@login_required
+def proxy_openpdf(filename):
+    try:
+        # Request ke service PDF untuk dibuka secara inline
+        materi_service_url = f"{MATERI_SERVICE_URL_PDF}/openpdf/pdf/{filename}"
+        response = requests.get(materi_service_url, stream=True)
+
+        if response.status_code == 200:
+            return Response(
+                response.iter_content(chunk_size=1024),
+                content_type=response.headers.get('Content-Type', 'application/pdf'),
+                headers={
+                    "Content-Disposition": f"inline; filename={filename}"
+                }
+            )
+        else:
+            return f"Gagal membuka PDF. Status code: {response.status_code}", 404
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to materi_service: {e}")
+        return "Terjadi kesalahan saat mengakses PDF", 500
     
+@app.route('/uploads/<filename>')
+@login_required
+def proxy_downloadpdf(filename):
+    try:
+        # Request ke service PDF untuk diunduh
+        materi_service_url = f"{MATERI_SERVICE_URL_PDF}/uploads/pdf/{filename}"
+        response = requests.get(materi_service_url, stream=True)
+
+        if response.status_code == 200:
+            return Response(
+                response.iter_content(chunk_size=1024),
+                content_type=response.headers.get('Content-Type', 'application/pdf'),
+                headers={
+                    "Content-Disposition": f"attachment; filename={filename}"
+                }
+            )
+        else:
+            return f"Gagal mengunduh PDF. Status code: {response.status_code}", 404
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to materi_service: {e}")
+        return "Terjadi kesalahan saat mengakses PDF", 500
 
 @app.route('/create-soal')
 @login_required

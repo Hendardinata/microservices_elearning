@@ -1,6 +1,25 @@
 version: '3.8'
 
 services:
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    ports:
+      - "80:80"  # Mengekspos port 80 untuk akses HTTP
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - auth_service
+      - user_service
+      - hello_service
+      - jurusan_service
+      - kelas_service
+      - materi_service
+      - soal_service
+    networks:
+      - app_network
+
   auth_service:
     build:
       context: ./auth_service  # Lokasi Dockerfile untuk auth_service
@@ -123,6 +142,17 @@ services:
       - .:/scripts
     working_dir: /scripts
     command: ["run", "/scripts/test.js"]
+
+  ngrok:
+    image: wernight/ngrok
+    container_name: ngrok
+    environment:
+      - NGROK_AUTHTOKEN=2tDD8vJfDbeul6HFWoKfNoqdkw0_7QXxCofkNAZL9grgsc15k  # Ganti dengan token autentikasi ngrok Anda
+      - NGROK_PORT=nginx:80  # Mengekspos port nginx ke ngrok
+    ports:
+      - "4040:4040"  # Akses ke dashboard ngrok
+    networks:
+      - app_network
 
 networks:
   app_network:
