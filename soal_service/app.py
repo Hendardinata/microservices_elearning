@@ -6,6 +6,9 @@ from bson import ObjectId
 from bson.errors import InvalidId
 import requests
 import os
+from functools import wraps
+from redis import Redis
+import jwt
 
 load_dotenv()
 
@@ -14,8 +17,7 @@ CORS(app)
 
 # Mengambil konfigurasi dari file .env
 USER_SERVICE_URL = os.getenv('USER_SERVICE_URL')
-# API Token
-API_TOKEN = os.getenv('API_TOKEN')
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
 # Konfigurasi MongoDB
 mongo_uri = os.getenv('MONGO_URI')
@@ -25,18 +27,38 @@ db = client[mongo_db_name]
 soal_collection = db["soal"]
 jawaban_collection = db["jawaban"]
 
-# Fungsi untuk menambahkan header Authorization
-def get_headers():
-    return {
-        'Authorization': API_TOKEN
-    }
+redis_client = Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
 
-# Middleware untuk memeriksa token
-@app.before_request
-def check_token():
-    token = request.headers.get('Authorization')
-    if token != API_TOKEN:
-        abort(403)  # Forbidden
+def verify_jwt(token):
+    if redis_client.get(token) == "blacklisted":
+        print("Token is blacklisted")
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            return jsonify({'error': 'Unauthorized, token not found'}), 401
+
+        user = verify_jwt(token)
+        if not user:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/create', methods=['POST'])
 def create():
@@ -163,6 +185,10 @@ def submit_jawaban():
 @app.route('/jawaban/<soal_id>', methods=['GET'])
 def get_jawaban_by_soal_id(soal_id):
     try:
+        # Ambil token dari header permintaan
+        auth_header = request.headers.get('Authorization')
+        headers = {'Authorization': auth_header} if auth_header else {}
+
         # Cari jawaban berdasarkan soal_id
         jawabans = list(jawaban_collection.find({"soal_id": soal_id}))
 
@@ -171,25 +197,23 @@ def get_jawaban_by_soal_id(soal_id):
         if not soal:
             return jsonify({"error": "Soal tidak ditemukan."}), 404
 
-        # Konversi ObjectId menjadi string dan ambil informasi user melalui API
         for jawaban in jawabans:
             jawaban['_id'] = str(jawaban['_id'])
 
-            # Panggil API dari user_service untuk mendapatkan informasi user
-            user_response = requests.get(f"{USER_SERVICE_URL}/{jawaban['user_id']}", headers=get_headers())
+            user_response = requests.get(f"{USER_SERVICE_URL}/{jawaban['user_id']}", headers=headers)
             user_response.raise_for_status()
             user = user_response.json()
 
-            # Tambahkan informasi username dari user_service
             jawaban['nama'] = user.get('nama', 'User tidak ditemukan')
             jawaban['username'] = user.get('username', 'Username tidak ditemukan')
 
-        # Tambahkan soal ke dalam response
         soal['_id'] = str(soal['_id'])
         return jsonify({"jawabans": jawabans, "soal": soal}), 200
+
     except requests.exceptions.RequestException as e:
-        print(f"Error occurred: {str(e)}")  # Cetak pesan kesalahan
+        print(f"Error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/jawaban', methods=['GET'])
 def get_jawaban_by_user_id():
@@ -202,6 +226,7 @@ def get_jawaban_by_user_id():
 
 @app.route('/koreksi-jawaban/<jawaban_id>', methods=['POST'])
 def koreksi_jawaban(jawaban_id):
+
     data = request.json
     try:
         # Cari jawaban berdasarkan ID

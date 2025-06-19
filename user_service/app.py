@@ -6,7 +6,10 @@ from werkzeug.security import generate_password_hash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
+import jwt
 import requests
+from functools import wraps
+from redis import Redis
 import re
 
 load_dotenv()
@@ -19,28 +22,62 @@ app.template_folder = 'argon-dashboard'
 app = Flask(__name__, template_folder='argon-dashboard/templates', static_folder='argon-dashboard/assets')
 
 # Mengambil konfigurasi dari file .env
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'mysecretjwtkey')
 KELAS_SERVICE_URL = os.getenv('KELAS_SERVICE_URL')
 JURUSAN_SERVICE_URL = os.getenv('JURUSAN_SERVICE_URL')
 
-# API Token
-API_TOKEN = os.getenv('API_TOKEN')
+redis_client = Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
 
 # Fungsi untuk menambahkan header Authorization
-def get_headers():
-    return {
-        'Authorization': API_TOKEN
-    }
+def verify_jwt(token):
+    if redis_client.get(token) == "blacklisted":
+        print("Token is blacklisted")
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+    
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            return jsonify({'error': 'Unauthorized, token not found'}), 401
+
+        user = verify_jwt(token)
+        if not user:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Middleware untuk memeriksa token
 @app.before_request
 def check_token():
-    # Kecualikan rute yang mengakses file gambar
     if request.path.startswith('/static/uploads/users/'):
-        return 
-    
-    token = request.headers.get('Authorization')
-    if token != API_TOKEN:
-        abort(403)  # Forbidden
+        return
+
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+    else:
+        abort(401)
+
+    user = verify_jwt(token)
+    if not user:
+        abort(401)
+
+    request.user = user
+
 
 # Membuat koneksi ke MongoDB
 mongo_uri = os.getenv('MONGO_URI')
@@ -121,7 +158,7 @@ def insert_users():
     # Verifikasi kelas jika kelas_id diisi
     if kelas_id:
         try:
-            kelas_response = requests.get(f'{KELAS_SERVICE_URL}/{kelas_id}', headers=get_headers())
+            kelas_response = requests.get(f'{KELAS_SERVICE_URL}/{kelas_id}', headers={'Authorization': request.headers.get('Authorization')})
             if kelas_response.status_code != 200:
                 return jsonify({'message': 'Kelas tidak ditemukan!'}), 404
             kelas_data = kelas_response.json()
@@ -134,7 +171,7 @@ def insert_users():
     # Verifikasi jurusan jika jurusan_id diisi
     if jurusan_id:
         try:
-            jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/{jurusan_id}', headers=get_headers())
+            jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/{jurusan_id}', headers={'Authorization': request.headers.get('Authorization')})
             if jurusan_response.status_code != 200:
                 return jsonify({'message': 'Jurusan tidak ditemukan!'}), 404
             jurusan_data = jurusan_response.json()

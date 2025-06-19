@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'auth_service'
+    static_configs:
+      - targets: ['auth_service:5006']
+
+  - job_name: 'user_service'
+    static_configs:
+      - targets: ['user_service:5000']
+
+  - job_name: 'soal_service'
+    static_configs:
+      - targets: ['soal_service:5005']
+
+  - job_name: 'materi_service'
+    static_configs:
+      - targets: ['materi_service:5003']
+
+  - job_name: 'kelas_service'
+    static_configs:
+      - targets: ['kelas_service:5002']
+
+  - job_name: 'jurusan_service'
+    static_configs:
+      - targets: ['jurusan_service:5004']
+
+  - job_name: 'hello_service'
+    static_configs:
+      - targets: ['hello_service:5001']
+

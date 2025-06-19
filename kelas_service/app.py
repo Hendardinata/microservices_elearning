@@ -4,6 +4,9 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 import os
 import requests
+import jwt
+from functools import wraps
+from redis import Redis
 
 load_dotenv()
 
@@ -11,6 +14,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Mengambil konfigurasi dari file .env
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'mysecretjwtkey')
 mongo_uri = os.getenv('MONGO_URI')
 mongo_db_name = os.getenv('MONGO_DB_NAME')
 jurusan_service_url = os.getenv('JURUSAN_SERVICE_URL')
@@ -20,21 +24,38 @@ app.template_folder = 'argon-dashboard'
 # app.static_folder = 'argon-dashboard/assets'
 app = Flask(__name__, template_folder='argon-dashboard/templates', static_folder='argon-dashboard/assets')
 
-# API Token
-API_TOKEN = os.getenv('API_TOKEN')
+redis_client = Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
 
-# Fungsi untuk menambahkan header Authorization
-def get_headers():
-    return {
-        'Authorization': API_TOKEN
-    }
+def verify_jwt(token):
+    if redis_client.get(token) == "blacklisted":
+        print("Token is blacklisted")
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+    
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            return jsonify({'error': 'Unauthorized, token not found'}), 401
 
-# Middleware untuk memeriksa token
-@app.before_request
-def check_token():
-    token = request.headers.get('Authorization')
-    if token != API_TOKEN:
-        abort(403)  # Forbidden
+        user = verify_jwt(token)
+        if not user:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Membuat koneksi ke MongoDB
 client = MongoClient(mongo_uri)

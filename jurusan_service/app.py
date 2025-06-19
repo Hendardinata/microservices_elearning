@@ -1,34 +1,75 @@
-from flask import Flask, request, jsonify, render_template, abort
+from flask import Flask, request, jsonify, render_template, abort, Response
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from flask_cors import CORS
 import os
+import jwt
+from functools import wraps
+from redis import Redis
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 CORS(app)
 
 # Mengambil konfigurasi dari file .env
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'mysecretjwtkey')
 mongo_uri = os.getenv('MONGO_URI')
 mongo_db_name = os.getenv('MONGO_DB_NAME')
 
-# API Token
-API_TOKEN = os.getenv('API_TOKEN')
+redis_client = Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
 
-# Middleware untuk memeriksa token
-@app.before_request
-def check_token():
-    token = request.headers.get('Authorization')
-    if token != API_TOKEN:
-        abort(403)  # Forbidden
+# API Token
+# API_TOKEN = os.getenv('API_TOKEN')
+
+# # Middleware untuk memeriksa token
+# @app.before_request
+# def check_token():
+#     token = request.headers.get('Authorization')
+#     if token != API_TOKEN:
+#         abort(403)  # Forbidden
+
+def verify_jwt(token):
+    if redis_client.get(token) == "blacklisted":
+        print("Token is blacklisted")
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+    
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            return jsonify({'error': 'Unauthorized, token not found'}), 401
+
+        user = verify_jwt(token)
+        if not user:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Membuat koneksi ke MongoDB
 client = MongoClient(mongo_uri)
 db = client[mongo_db_name]
 
 @app.route('/jurusan', methods=['GET'])
+@jwt_required
 def get_jurusan():
     jurusan = list(db.jurusan.find())
     for j in jurusan:
@@ -108,5 +149,12 @@ def delete_jurusan(jurusan_id):
         return jsonify({'message': 'Jurusan tidak ditemukan'}), 404
     return '', 204
 
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
+
 if __name__ == '__main__':
+    print("ROUTE YANG TERDAFTAR:")
+    print(app.url_map)
     app.run(host='0.0.0.0', port=5004, debug=True)

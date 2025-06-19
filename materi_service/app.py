@@ -4,8 +4,11 @@ from bson.objectid import ObjectId
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import os
+import jwt
 import requests
 import logging
+from functools import wraps
+from redis import Redis
 
 load_dotenv()
 
@@ -14,25 +17,58 @@ app = Flask(__name__)
 # Mengambil konfigurasi dari file .env
 mongo_uri = os.getenv('MONGO_URI')
 mongo_db_name = os.getenv('MONGO_DB_NAME')
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 KELAS_SERVICE_URL = os.getenv('KELAS_SERVICE_URL')
 JURUSAN_SERVICE_URL = os.getenv('JURUSAN_SERVICE_URL')
 
 # API Token
 API_TOKEN = os.getenv('API_TOKEN')
 
-# Fungsi untuk menambahkan header Authorization
-def get_headers():
-    return {
-        'Authorization': API_TOKEN
-    }
+redis_client = Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, decode_responses=True)
 
+# Fungsi untuk menambahkan header Authorization
+# def get_headers():
+#     return {
+#         'Authorization': API_TOKEN
+#     }
+
+def verify_jwt(token):
+    if redis_client.get(token) == "blacklisted":
+        print("Token is blacklisted")
+        return None
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        print("Token expired")
+        return None
+    except jwt.InvalidTokenError:
+        print("Invalid token")
+        return None
+
+def jwt_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(' ')[1]
+        else:
+            return jsonify({'error': 'Unauthorized, token not found'}), 401
+
+        user = verify_jwt(token)
+        if not user:
+            return jsonify({'error': 'Invalid or expired token'}), 401
+        
+        request.user = user
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Middleware untuk memeriksa token
-@app.before_request
-def check_token():
-    token = request.headers.get('Authorization')
-    if token != API_TOKEN:
-        abort(403)  # Forbidden
+# @app.before_request
+# def check_token():
+#     token = request.headers.get('Authorization')
+#     if token != API_TOKEN:
+#         abort(403)  # Forbidden
 
 # Membuat koneksi ke MongoDB
 client = MongoClient(mongo_uri)
@@ -84,12 +120,12 @@ def get_materi_by_id(materi_id):
 def create():
     try:
         # Get data from kelas_service
-        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas', headers=get_headers())
+        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas', headers={'Authorization': request.headers.get('Authorization')})
         kelas_response.raise_for_status()
         kelas_list = kelas_response.json()
 
         # Get data from jurusan_service
-        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan', headers=get_headers())
+        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan', headers={'Authorization': request.headers.get('Authorization')})
         jurusan_response.raise_for_status()
         jurusan_list = jurusan_response.json()
 
@@ -115,7 +151,7 @@ def insert_materi():
         return jsonify({'message': 'Semua field harus diisi!'}), 400
 
     try:
-        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas/{kelas_id}', headers=get_headers())
+        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas/{kelas_id}', headers={'Authorization': request.headers.get('Authorization')})
         if kelas_response.status_code != 200:
             return jsonify({'message': 'Kelas tidak ditemukan!'}), 404
         kelas_data = kelas_response.json()
@@ -124,7 +160,7 @@ def insert_materi():
         return jsonify({'message': str(e)}), 500
 
     try:
-        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan/{jurusan_id}', headers=get_headers())
+        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan/{jurusan_id}', headers={'Authorization': request.headers.get('Authorization')})
         if jurusan_response.status_code != 200:
             return jsonify({'message': 'Jurusan tidak ditemukan!'}), 404
     except requests.exceptions.RequestException as e:
@@ -181,7 +217,7 @@ def update_materi(materi_id):
 
     # Validasi kelas
     try:
-        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas/{kelas_id}', headers=get_headers())
+        kelas_response = requests.get(f'{KELAS_SERVICE_URL}/kelas/{kelas_id}', headers={'Authorization': request.headers.get('Authorization')})
         if kelas_response.status_code != 200:
             return jsonify({'message': 'Kelas tidak ditemukan!'}), 404
         kelas_data = kelas_response.json()
@@ -190,7 +226,7 @@ def update_materi(materi_id):
 
     # Validasi jurusan
     try:
-        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan/{jurusan_id}', headers=get_headers())
+        jurusan_response = requests.get(f'{JURUSAN_SERVICE_URL}/jurusan/{jurusan_id}', headers={'Authorization': request.headers.get('Authorization')})
         if jurusan_response.status_code != 200:
             return jsonify({'message': 'Jurusan tidak ditemukan!'}), 404
     except requests.exceptions.RequestException as e:

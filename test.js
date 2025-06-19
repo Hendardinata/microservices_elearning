@@ -68,45 +68,150 @@
 
 
 //CREATE USERS
-import http from 'k6/http';
-import { check } from 'k6';
+// import http from 'k6/http';
+// import { check } from 'k6';
 
+// export let options = {
+//     vus: 5,
+//     duration: '5s',
+// };
+
+// export default function () {
+//     let url = 'http://host.docker.internal:5005/create';
+
+//     let payload = JSON.stringify({
+//         soal: [
+//             `Soal Test ${__VU}-${__ITER} - 1`,
+//             `Soal Test ${__VU}-${__ITER} - 2`,
+//             `Soal Test ${__VU}-${__ITER} - 3`
+//         ],
+//         kelas_id: "66a61c44b70cba3c548221db",
+//         jurusan_id: "66a5d2c830a7ff62681cc61c",
+//         materi_id: "679e3e1a1561e5f88508e110",
+//         user_id: "66bba38a37b011ff78baec22",
+//     });
+
+//     let params = {
+//         headers: {
+//             'Authorization': 'sma_11_api_token', // Pastikan token valid
+//             'Content-Type': 'application/json', // Pastikan dikirim sebagai JSON
+//         },
+//     };
+
+//     console.log(`Sending payload: ${payload}`); // Debugging
+
+//     let res = http.post(url, payload, params);
+
+//     check(res, {
+//         'status 201': (r) => r.status === 201,
+//         'status 400 (Bad Request)': (r) => r.status === 400,
+//     });
+
+//     console.log(`Response status: ${res.status}, Body: ${res.body}`);
+// }
+
+
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+const BASE_URL = 'http://host.docker.internal:5006';
+const API_TARGET = 'http://host.docker.internal:5004/jurusan';
+
+// ==== PILIH SKENARIO YANG AKTIF DENGAN UNCOMMENT ====
 export let options = {
-    vus: 5,
-    duration: '5s',
+    scenarios: {
+        // --- Load Test ---
+        load_test: {
+            executor: 'constant-vus',
+            vus: 20,
+            duration: '60s',
+        },
+
+        // --- Stress Test ---
+        // stress_test: {
+        //     executor: 'ramping-vus',
+        //     startVUs: 10,
+        //     stages: [
+        //         { duration: '10s', target: 50 },
+        //         { duration: '20s', target: 100 },
+        //         { duration: '20s', target: 150 },
+        //         { duration: '10s', target: 0 },
+        //     ],
+        // },
+
+        // --- Soak Test ---
+        // soak_test: {
+        //     executor: 'constant-vus',
+        //     vus: 10,
+        //     duration: '5m',
+        // },
+
+        // --- Spike Test ---
+        // spike_test: {
+        //     executor: 'ramping-vus',
+        //     startVUs: 10,
+        //     stages: [
+        //         { duration: '10s', target: 100 },
+        //         { duration: '10s', target: 20 },
+        //     ],
+        // },
+
+        // --- Breakpoint Test ---
+        // breakpoint_test: {
+        //     executor: 'ramping-vus',
+        //     startVUs: 1,
+        //     stages: [
+        //         { duration: '5s', target: 20 },
+        //         { duration: '5s', target: 50 },
+        //         { duration: '5s', target: 100 },
+        //         { duration: '5s', target: 200 },
+        //         { duration: '5s', target: 350 },
+        //         { duration: '5s', target: 0 },
+        //     ],
+        // },
+    },
 };
 
-export default function () {
-    let url = 'http://host.docker.internal:5005/create';
-
-    let payload = JSON.stringify({
-        soal: [
-            `Soal Test ${__VU}-${__ITER} - 1`,
-            `Soal Test ${__VU}-${__ITER} - 2`,
-            `Soal Test ${__VU}-${__ITER} - 3`
-        ],
-        kelas_id: "66a61c44b70cba3c548221db",
-        jurusan_id: "66a5d2c830a7ff62681cc61c",
-        materi_id: "679e3e1a1561e5f88508e110",
-        user_id: "66bba38a37b011ff78baec22",
+// === Setup: Login untuk ambil token ===
+export function setup() {
+    const loginPayload = JSON.stringify({
+        username: 'admin',      // Ganti sesuai dengan user yang valid
+        password: '12qwaszx',   // Ganti sesuai password
     });
 
-    let params = {
-        headers: {
-            'Authorization': 'sma_11_api_token', // Pastikan token valid
-            'Content-Type': 'application/json', // Pastikan dikirim sebagai JSON
-        },
+    const loginHeaders = {
+        'Content-Type': 'application/json',
     };
 
-    console.log(`Sending payload: ${payload}`); // Debugging
-
-    let res = http.post(url, payload, params);
-
-    check(res, {
-        'status 201': (r) => r.status === 201,
-        'status 400 (Bad Request)': (r) => r.status === 400,
+    const loginRes = http.post(`${BASE_URL}/api/login`, loginPayload, {
+        headers: loginHeaders,
     });
 
-    console.log(`Response status: ${res.status}, Body: ${res.body}`);
+    check(loginRes, {
+        'login sukses': (res) => res.status === 200,
+        'token diterima': (res) => res.json('token') !== undefined,
+    });
+
+    const token = loginRes.json('token');
+    return { token };
 }
+
+// === Function Utama: Kirim request dengan token ===
+export default function (data) {
+    const token = data.token;
+
+    const headers = {
+        'Authorization': `Bearer ${token}`,
+    };
+
+    const res = http.get(API_TARGET, { headers });
+
+    check(res, {
+        'status 200': (r) => r.status === 200,
+        'body tidak kosong': (r) => r.body && r.body.length > 0,
+    });
+
+    sleep(1);
+}
+
 
