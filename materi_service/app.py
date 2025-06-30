@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect,  send_from_directory, abort
+from flask import Flask, request, jsonify, render_template, redirect,  send_from_directory, abort, Response
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
@@ -9,10 +9,13 @@ import requests
 import logging
 from functools import wraps
 from redis import Redis
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 # Mengambil konfigurasi dari file .env
 mongo_uri = os.getenv('MONGO_URI')
@@ -299,6 +302,11 @@ def delete_materi(m_id):
             return jsonify({'message': 'Materi tidak ditemukan.'}), 404
     except Exception as e:
         return jsonify({'message': str(e)}), 500
+    
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5003, debug=True)

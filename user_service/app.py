@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file, abort
+from flask import Flask, request, jsonify, render_template, redirect, url_for, send_file, abort, Response
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
@@ -11,11 +11,13 @@ import requests
 from functools import wraps
 from redis import Redis
 import re
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 app = Flask(__name__)
-
+metrics = PrometheusMetrics(app)
 # Mengatur direktori template dan static
 app.template_folder = 'argon-dashboard'
 # app.static_folder = 'argon-dashboard/assets'
@@ -333,6 +335,11 @@ def delete_user(user_id):
         return jsonify({"message": "User berhasil dihapus."}), 200
     except Exception as e:
         return jsonify({'message': 'Terjadi kesalahan pada server.', 'error': str(e)}), 500
+    
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
     
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

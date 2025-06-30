@@ -155,6 +155,6 @@ def metrics_manual():
     return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
-    print("ROUTE YANG TERDAFTAR:")
-    print(app.url_map)
+    # print("ROUTE YANG TERDAFTAR:")
+    # print(app.url_map)
     app.run(host='0.0.0.0', port=5004, debug=True)

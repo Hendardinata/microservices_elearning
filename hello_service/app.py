@@ -11,11 +11,14 @@ import requests
 import os
 import jwt
 from redis import Redis
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 # Inisialisasi aplikasi Flask
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 # Mengatur direktori template dan static
 app.template_folder = 'argon-dashboard'
@@ -1291,6 +1294,10 @@ def profile():
 def inject_user():
     return dict(user=getattr(request, "user", None))
 
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001, debug=True)

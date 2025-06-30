@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, abort
+from flask import Flask, request, jsonify, render_template, abort, Response
 from flask_cors import CORS
 from pymongo import MongoClient
 from dotenv import load_dotenv
@@ -9,10 +9,13 @@ import os
 from functools import wraps
 from redis import Redis
 import jwt
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 CORS(app)
 
 # Mengambil konfigurasi dari file .env
@@ -263,6 +266,11 @@ def delete_soal(soal_id):
     except Exception as e:
         print(f"Error occurred: {str(e)}")  # Cetak pesan kesalahan
         return jsonify({"error": str(e)}), 500
+    
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5005, debug=True)

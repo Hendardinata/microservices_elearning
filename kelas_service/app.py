@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect, flash, abort
+from flask import Flask, request, jsonify, render_template, redirect, flash, abort, Response
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 from dotenv import load_dotenv
@@ -7,10 +7,13 @@ import requests
 import jwt
 from functools import wraps
 from redis import Redis
+from prometheus_flask_exporter import PrometheusMetrics
+import prometheus_client
 
 load_dotenv()
 
 app = Flask(__name__)
+metrics = PrometheusMetrics(app)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Mengambil konfigurasi dari file .env
@@ -160,6 +163,11 @@ def delete_kelas(kelas_id):
     if result.deleted_count == 0:
         return jsonify({'message': 'Kelas tidak ditemukan'}), 404
     return '', 204
+
+# Fallback jika metrics bawaan tidak muncul
+@app.route('/metrics')
+def metrics_manual():
+    return Response(prometheus_client.generate_latest(), mimetype=prometheus_client.CONTENT_TYPE_LATEST)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002, debug=True)
