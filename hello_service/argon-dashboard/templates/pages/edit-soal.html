@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show   bg-gray-100">
+  <div class="min-height-300 bg-primary position-absolute w-100"></div>
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management User</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+
+                <div class="container-fluid py-4">
+                  <div class="row">
+                    <div class="col-md-8">
+                      <div class="card">
+                        <div class="card-header pb-0">
+                        </div>
+
+                        <div class="card-body">
+                          <p class="text-uppercase text-sm">Soal Information</p>
+                          <form id="update-soal-form" enctype="multipart/form-data">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="jurusan">Jurusan:</label>
+                                        <div class="d-flex">
+                                            <select class="form-control me-2 flex-grow-1" id="jurusan" name="jurusan" required disabled>
+                                                <option value="">Pilih Jurusan</option>
+                                                {% for jurusan in jurusan_list %}
+                                                  <option value="{{ jurusan['_id'] }}" {% if jurusan['_id'] == soal.jurusan_id %}selected{% endif %}>{{ jurusan['nama_jurusan'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="kelas">Kelas:</label>
+                                        <div class="d-flex">
+                                            <select class="form-control me-2 flex-grow-1" id="kelas" name="kelas" required disabled>
+                                                <option value="">Pilih Kelas</option>
+                                                {% for kelas in kelas_list %}
+                                                  <option value="{{ kelas['_id'] }}" {% if kelas['_id'] == soal.kelas_id %}selected{% endif %}>{{ kelas['nama_kelas'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label for="materi">Materi:</label>
+                                        <div class="d-flex">
+                                            <select class="form-control me-2 flex-grow-1" id="materi" name="materi" required disabled>
+                                                <option value="">Pilih Materi</option>
+                                                {% for materi in materi_list %}
+                                                <option value="{{ materi['_id'] }}" {% if materi['_id'] == soal.materi_id %}selected{% endif %}>{{ materi['nama_materi'] }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                        
+                                <div class="col-md-12">
+                                  <div class="form-group">
+                                      <div id="form-fields">
+                                          {% for key, value in soal.items() %}
+                                              {% if key.startswith('question_') %}
+                                                  <div class="form-field">
+                                                      <input class="form-control" type="text" name="soal[]" value="{{ value }}" placeholder="Enter question" required>
+                                                  </div>
+                                              {% endif %}
+                                          {% endfor %}
+                                      </div>
+                                  </div>
+                              </div>
+                              
+                            </div>
+                            <div class="d-flex align-items-center" style="gap: 10px;">
+                                <button type="button" id="add-field" class="btn bg-gradient-info mb-0 d-flex align-items-center">
+                                    <i class="fas fa-save"></i>&nbsp;&nbsp;Add Question
+                                </button>
+                                <button type="submit" class="btn bg-gradient-info mb-0 d-flex align-items-center">
+                                    <i class="fas fa-save"></i>&nbsp;&nbsp;Update
+                                </button>
+                            </div>
+                        </form>
+                              
+                          <hr class="horizontal dark">
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+
+  <!--   Core JS Files   -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+      // Menambah field soal baru
+      $('#add-field').click(function() {
+        $('#form-fields').append('<div class="form-field"><input class="form-control mt-3" type="text" name="soal[]" placeholder="Enter question" required></div>');
+      });
+
+      // Event submit form
+      $(document).ready(function() {
+        $('#update-soal-form').submit(function(e) {
+            e.preventDefault();
+    
+            let soal_id = '{{ soal._id }}';  // ID soal dari Jinja
+            let soalData = {};
+            let index = 1;
+    
+            $('#form-fields .form-field input').each(function() {
+                soalData[`question_${index}`] = $(this).val();
+                index++;
+            });
+    
+            let postData = {
+                soal: soalData,
+                kelas_id: $("#kelas").val(),
+                jurusan_id: $("#jurusan").val(),
+                materi_id: $("#materi").val(),
+                user_id: "{{ session['user_id'] }}"  // Ambil user_id dari session
+            };
+    
+            $.ajax({
+                url: `/proxy/soal/update/${soal_id}`,
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(postData),
+                success: function(response) {
+                    alert(response.message);
+                    window.location.href = response.redirect_url;
+                },
+                error: function(error) {
+                    alert('Error: ' + (error.responseJSON ? error.responseJSON.message : 'Unknown error'));
+                }
+            });
+        });
+    });
+  });
+  </script>
+
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>

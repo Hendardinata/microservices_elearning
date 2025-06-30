@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show   bg-gray-100">
+  <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management Kelas</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+
+                <div class="container-fluid py-4">
+                  <div class="row">
+                    <div class="col-md-8">
+                      <div class="card">
+                        <div class="card-header pb-0">
+                        </div>
+
+                        <div class="card-body">
+                          <p class="text-uppercase text-sm">Kelas Information</p>
+                          <form id="kelas-form" method="post">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="nama_kelas" class="form-control-label">Nama Kelas</label>
+                                        <input class="form-control" type="text" name="nama_kelas" id="nama_kelas" value="{{ kelas.nama_kelas }}" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label for="deskripsi_kelas" class="form-control-label">Deskripsi Kelas</label>
+                                        <input class="form-control" type="text" name="deskripsi_kelas" id="deskripsi_kelas" value="{{ ', '.join(kelas.deskripsi_kelas) }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-2 text-start d-flex">
+                                <button type="button" id="update-kelas" class="btn bg-gradient-info mb-0 me-2 d-flex align-items-center">
+                                    <i class="fas fa-save"></i>&nbsp;&nbsp;Update
+                                </button>
+                                <a class="btn bg-gradient-warning mb-0 d-flex align-items-center" href="{{ url_for('kelas') }}">
+                                    <i class="fas fa-times"></i>&nbsp;&nbsp;Cancel
+                                </a>
+                            </div>
+                        </form>
+                          <hr class="horizontal dark">
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+  
+  <!--   Core JS Files   -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+        $('#update-kelas').on('click', function() {
+            var kelasId = "{{ kelas._id }}";
+            var kelasData = {
+                nama_kelas: $('#nama_kelas').val(),
+                deskripsi_kelas: $('#deskripsi_kelas').val().split(',').map(item => item.trim())
+            };
+
+            $.ajax({
+                url: '/proxy/kelas/update/' + kelasId,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(kelasData),
+                success: function(response) {
+                    console.log('Response:', response);
+                    alert('Kelas berhasil diupdate.');
+                    window.location.href = response.redirect_url;
+                },
+                error: function(xhr) {
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        alert(xhr.responseJSON.message);
+                    } else {
+                        alert('Terjadi kesalahan.');
+                    }
+                    console.error('Error:', xhr);
+                }
+            });
+        });
+    });
+</script>
+
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>

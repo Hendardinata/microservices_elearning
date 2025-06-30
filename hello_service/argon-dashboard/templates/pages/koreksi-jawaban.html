@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include 'pages/header.html' %}
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    
+    <style>
+    .form-control[readonly] {
+        background-color: #ffffff; /* Warna background khusus untuk readonly */
+        color: #000; /* Sesuaikan warna teks jika diperlukan */
+    }
+    </style>
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+    <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+
+    {% include 'pages/aside.html' %}
+
+    <main class="main-content position-relative border-radius-lg ">
+        <!-- Navbar -->
+        {% include 'pages/navbar.html' %}
+        <!-- End Navbar -->
+
+        <div class="container-fluid py-4">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mb-4">
+                        <div class="card-header pb-0">
+                            <h6>Management Jawaban</h6>
+                        </div>
+
+                        <!-- Koreksi Jawaban Section -->
+                        {% if jawabans %}
+                            {% if all_corrected %}
+                                <div class="mx-4">
+                                    <a href="{{ url_for('download_rekap', soal_id=soal_id) }}" class="btn bg-gradient-info">Download Rekap Nilai</a>
+                                </div>
+                            {% endif %}
+                            {% for jawaban in jawabans %}
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header pb-0">
+                                            <p>Disubmit oleh: {{ jawaban.nama }}</p>
+                                            <p>Username: {{ jawaban.get('username', 'No Username') }}</p>
+                                        </div>
+                                        <div class="card-body">
+                                            {% if jawaban.nilai is not defined or jawaban.feedback is not defined %}
+                                                <!-- Loop untuk menampilkan soal dan jawaban berpasangan -->
+                                                {% for key, value in soal.items() %}
+                                                    {% if key.startswith('question_') %}
+                                                        <div class="mb-3">
+                                                            <!-- Form Group untuk Soal -->
+                                                            <div class="form-group">
+                                                                <label><strong>Soal :</strong></label>
+                                                                <input type="text" class="form-control" value="{{ value }}" readonly>
+
+                                                                <div class="form-group">
+                                                                    <label><strong>Jawaban :</strong></label>
+                                                                    <!-- Render jawaban siswa -->
+                                                                    <div class="quill-content border p-2" style="background-color: #f9f9f9;">
+                                                                        {{ jawaban[key.replace('question_', 'question_')] | safe }}
+                                                                    </div>
+                                                                </div>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endfor %}
+
+                                                <form class="koreksi-form" action="{{ url_for('submit_koreksi', jawaban_id=jawaban['_id']) }}" method="post">
+                                                    <div class="form-group">
+                                                        <label for="nilai">Nilai:</label>
+                                                        <input type="number" class="form-control" name="nilai" id="nilai" min="0" max="100" required>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label for="feedback">Feedback:</label>
+                                                        <textarea class="form-control" name="feedback" id="feedback" required></textarea>
+                                                    </div>
+                                                    <button type="submit" class="btn bg-gradient-success mt-3">Simpan Koreksi</button>
+                                                </form>
+                                            {% else %}
+                                                <div class="alert alert-success pb-0" role="alert">
+                                                    <p><strong>Informasi:</strong> Jawaban ini sudah dikoreksi dan disimpan.</p>
+                                                    <p><strong>Nilai:</strong> {{ jawaban.nilai }}</p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <hr>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="alert alert-info pb-0 text-white mx-3" role="alert">
+                                <p><strong>Informasi:</strong> Tidak ada jawaban yang ditemukan untuk soal ini.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    {% include 'pages/pengaturan.html' %}
+
+    <!--   Core JS Files   -->
+    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+    <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+    <script>
+        var win = navigator.platform.indexOf('Win') > -1;
+        if (win && document.querySelector('#sidenav-scrollbar')) {
+            var options = {
+                damping: '0.5'
+            }
+            Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+      <!-- Include Quill JS -->
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
+    <script>
+    $(document).ready(function() {
+        var quillInstances = [];
+
+        // Initialize Quill editor for each question
+        $('.quill-editor').each(function(index) {
+            var quill = new Quill(this, {
+                theme: 'snow',
+                modules: {
+                    toolbar: [
+                        ['bold', 'italic', 'underline'], // toggled buttons
+                        ['link', 'image'], // link and image
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }] // ordered and bullet lists
+                    ]
+                }
+            });
+            quillInstances.push(quill);
+        });
+    });
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            $('.koreksi-form').submit(function(event){
+                event.preventDefault(); // Mencegah form dari submit default
+        
+                var form = $(this); // Form yang sedang disubmit
+                var formData = form.serialize(); // Serialize data form
+        
+                $.ajax({
+                    url: form.attr('action'), // Menggunakan URL dari action form
+                    method: 'POST',
+                    data: formData,
+                    success: function(response){
+                        alert(response.message); // Menampilkan pesan berhasil
+                        window.location.reload(true); // Refresh halaman setelah penyimpanan berhasil
+                    },
+                    error: function(response){
+                        alert(response.responseJSON.message); // Menampilkan pesan error
+                    }
+                });
+            });
+        });
+        
+    </script>
+    
+    <!-- Github buttons -->
+    <script async defer src="https://buttons.github.io/buttons.js"></script>
+    <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+    <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+</html>

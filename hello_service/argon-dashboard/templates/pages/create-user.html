@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show   bg-gray-100">
+  <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management User</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+
+                <div class="container-fluid py-4">
+                  <div class="row">
+                    <div class="col-md-8">
+                      <div class="card">
+                        <div class="card-header pb-0">
+                        </div>
+
+                        <div class="card-body">
+                          <p class="text-uppercase text-sm">User Information</p>
+                          <form id="create-user-form" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="username">NIP / NIS</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                            </div>
+                            <div class="form-group">
+                              <label for="nama">Nama</label>
+                              <input type="text" class="form-control" id="nama" name="nama" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="role">Role</label>
+                                <select class="form-control" id="role" name="role" required>
+                                    <option value="" disabled selected>Select Role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="guru">Guru</option>
+                                    <option value="siswa">Siswa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="alamat">Alamat</label>
+                                <input type="text" class="form-control" id="alamat" name="alamat">
+                            </div>
+                            <div class="form-group">
+                                <label for="kota">Kota</label>
+                                <input type="text" class="form-control" id="kota" name="kota">
+                            </div>
+                            <div class="form-group">
+                                <label for="negara">Negara</label>
+                                <input type="text" class="form-control" id="negara" name="negara">
+                            </div>
+                            <div class="form-group">
+                                <label for="postal">Postal</label>
+                                <input type="text" class="form-control" id="postal" name="postal">
+                            </div>
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="text" class="form-control" id="phone" name="phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="foto">Foto</label>
+                                <input type="file" class="form-control" id="foto" name="foto">
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="jurusan_id" class="form-control-label">Jurusan</label>
+                                    <select class="form-control" name="jurusan_id" id="jurusan_id" required>
+                                        <option value="" disabled selected>Select Jurusan</option>
+                                        {% for jurusan in jurusan_list %}
+                                            <option value="{{ jurusan['_id'] }}">{{ jurusan['nama_jurusan'] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12" id="kelas-kelas-group" style="display: none;">
+                              <div class="col-md-12">
+                                <div class="form-group">
+                                  <label for="kelas_id" class="form-control-label">Kelas</label>
+                                  <select class="form-control" name="kelas_id" id="kelas_id" onchange="filterDeskripsiKelas()">
+                                    <option value="" disabled selected>Select Kelas</option>
+                                    {% for kelas in kelas_list %}
+                                      <option value="{{ kelas['_id'] }}">{{ kelas['nama_kelas'] }}</option>
+                                    {% endfor %}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="col-md-12" id="deskripsi-kelas-group" style="display: none;">
+                              <div class="form-group">
+                                <label for="deskripsi_kelas" class="form-control-label">Kode Kelas</label>
+                                <select class="form-control me-2 flex-grow-1" name="deskripsi_kelas" id="deskripsi_kelas">
+                                  <option value="" disabled selected>Pilih Kode Kelas</option>
+                                  {% for kelas in kelas_list %}
+                                    {% for deskripsi in kelas['deskripsi_kelas'] %}
+                                      <option data-kelas-id="{{ kelas['_id'] }}" value="{{ deskripsi }}">{{ deskripsi }}</option>
+                                    {% endfor %}
+                                  {% endfor %}
+                                </select>
+                              </div>
+                            </div>
+                            <div class="col-2 text-start d-flex">
+                                <button type="submit" class="btn bg-gradient-info text-white mb-0 me-2 d-flex align-items-center">
+                                    <i class="fas fa-save"></i>&nbsp;&nbsp;Add
+                                </button>
+                                <a href="/users" class="btn bg-gradient-warning text-white mb-0 d-flex align-items-center">
+                                    <i class="fas fa-times"></i>&nbsp;&nbsp;Cancel
+                                </a>
+                            </div>
+                        </form>
+                        
+                        
+                          <hr class="horizontal dark">
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+
+  <!--   Core JS Files   -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('role');
+        const kelasKelasGroup = document.getElementById('kelas-kelas-group');
+
+        roleSelect.addEventListener('change', function () {
+            if (roleSelect.value === 'siswa') {
+                kelasKelasGroup.style.display = 'block';
+            } else {
+                kelasKelasGroup.style.display = 'none';
+                document.getElementById('kelas_id').value = '';
+            }
+        });
+    });
+  </script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('role');
+        const deskripsiKelasGroup = document.getElementById('deskripsi-kelas-group');
+
+        roleSelect.addEventListener('change', function () {
+            if (roleSelect.value === 'siswa') {
+                deskripsiKelasGroup.style.display = 'block';
+            } else {
+                deskripsiKelasGroup.style.display = 'none';
+                document.getElementById('deskripsi_kelas').value = '';
+            }
+        });
+    });
+  </script>
+
+  <script>
+      function filterDeskripsiKelas() {
+        const selectedKelasId = document.getElementById('kelas_id').value;
+        const deskripsiOptions = document.querySelectorAll('#deskripsi_kelas option');
+
+        deskripsiOptions.forEach(option => {
+          if (option.getAttribute('data-kelas-id') === selectedKelasId || option.value === '') {
+            option.style.display = 'block';
+          } else {
+            option.style.display = 'none';
+          }
+        });
+      }
+    </script>
+
+    <script>
+        $(document).ready(function() {
+            $('#create-user-form').submit(function(event) {
+                event.preventDefault();
+
+                var formData = new FormData(this);
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/proxy/user/insert',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        alert(response.message);
+                        if (response.redirect_url) {
+                            window.location.href = response.redirect_url;
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            });
+        });
+    </script>
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management Jurusan</h6>
+
+              <!-- Tampilkan pesan kesalahan jika ada -->
+              {% if error_message %}
+              <div class="alert alert-danger m-4 text-white" role="alert">
+                {{ error_message }}
+              </div>
+              {% endif %}
+
+              {% if not error_message %}
+              <div class="col-3 text-start">
+                <a class="btn bg-gradient-info mb-0" href="{{ url_for('create_jurusan') }}">
+                  <i class="fas fa-plus"></i>&nbsp;&nbsp;Add New Jurusan</a>
+              </div>
+            </div>
+            
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Jurusan</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Detail Jurusan</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Akreditasi</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {% for jurusan in jurusan %}
+                    <tr>
+                      <td class="align-middle text-center text-sm">
+                        <p class="text-xs font-weight-bold mb-0">{{ jurusan.nama_jurusan }}</p>
+                      </td>
+                      <td class="align-middle text-center text-sm">
+                        <p class="text-xs font-weight-bold mb-0">{{ jurusan.deskripsi_jurusan }}</p>
+                      </td>
+                      <td class="align-middle text-center text-sm">
+                        <span class="badge badge-sm bg-gradient-success">{{ jurusan.akreditasi_jurusan }}</span>
+                      </td>
+                      <td class="align-middle text-center text-sm">
+                        <a href="{{ url_for('edit_jurusan', jurusan_id=jurusan['_id']) }}" class="text-white font-weight-bold text-xs bg-gradient-info p-2" data-toggle="tooltip" data-original-title="Edit user" style="border: none; border-radius: 4px;">
+                            Edit
+                        </a>
+                        <button data-jurusan-id="{{ jurusan._id }}" class="delete-jurusan text-white font-weight-bold text-xs bg-gradient-danger p-2" style="border: none; border-radius: 4px; margin-left: 4px;">
+                            Hapus
+                        </button>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+  
+  <!-- Core JS Files -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+  <script>
+    $(document).ready(function() {
+      $('.delete-jurusan').on('click', function() {
+          var jurusanId = $(this).data('jurusan-id');
+          console.log(jurusanId);
+          var confirmation = confirm('Apakah Anda yakin ingin menghapus jurusan ini?');
+  
+          if (confirmation) {
+              $.ajax({
+                  url: `/proxy/delete/${jurusanId}`,
+                  type: 'DELETE',
+                  success: function(response, status, xhr) {
+                      console.log('Response:', response);
+                      if (xhr.status === 200) {
+                          alert('Jurusan berhasil dihapus.');
+                          window.location.reload();
+                      } else {
+                          alert('Terjadi kesalahan.');
+                      }
+                  }
+              });
+          }
+      });
+    });
+  </script>
+  
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>

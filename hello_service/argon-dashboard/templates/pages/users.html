@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+  <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+  
+  {% if session['alert_message'] %}
+  <div class="alert alert-info alert-dismissible fade show text-center" role="alert" style="max-width: 30%; margin: 0 auto; top: 50%; position: fixed; left: 0; right: 0; transform: translateY(-50%);">
+    {{ session.pop('alert_message') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  </div>
+  <script>
+      setTimeout(function() {
+          var alertElement = document.querySelector('.alert');
+          if (alertElement) {
+              var bootstrapAlert = new bootstrap.Alert(alertElement);
+              bootstrapAlert.close();
+          }
+      }, 5000);
+  </script>
+  {% endif %}
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management Pengguna</h6>
+
+              {% if error_message %}
+              <div class="alert alert-danger m-4 text-white" role="alert">
+                {{ error_message }}
+              </div>
+              {% endif %}
+
+              {% if not error_message %}
+              {% if user.role == 'admin' %}
+              <div class="col-2 text-start">
+                <a class="btn bg-gradient-info text-white mb-0" href="{{ url_for('create_user') }}">
+                  <i class="fas fa-plus"></i>&nbsp;&nbsp;Add New User</a>
+              </div>
+              {% endif %}
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+                <table class="table align-items-center mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Username</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Nama</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Email</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Role</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Phone</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Jurusan</th>
+                      {% if user.role in ['admin', 'siswa'] %}
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Kelas</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Kode Kelas</th>
+                      {% endif %}
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Foto</th>
+                      <th class="text-center text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.username }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                          <p class="text-xs font-weight-bold mb-0">{{ u.nama }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.email }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.role }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.phone }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.nama_jurusan }}</p>
+                        </td>
+                        {% if user.role in ['admin', 'siswa'] %}
+                        <td class="align-middle text-center text-sm">
+                            <p class="text-xs font-weight-bold mb-0">{{ u.nama_kelas }}</p>
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                          <p class="text-xs font-weight-bold mb-0">{{ u.deskripsi_kelas }}</p>
+                        </td>
+                        {% endif %}
+                        <td class="align-middle text-center text-sm">
+                          <img src="{{ u.foto_url }}" alt="User Photo" class="img-fluid img-thumbnail" style="width: 50px; height: 60px; object-fit: cover;">
+                        </td>
+                        <td class="align-middle text-center text-sm">
+                          <a href="{{ url_for('edit_user', user_id=u['_id']) }}" class="text-white font-weight-bold text-xs bg-gradient-info p-2" data-toggle="tooltip" data-original-title="Edit User" style="border: none; border-radius: 4px; margin-left: 4px;">
+                            Edit
+                          </a>
+                          {% if user.role == 'admin' %}
+                          <button data-user-id="{{ u['_id'] }}" class="delete-user text-white font-weight-bold text-xs bg-gradient-danger p-2" style="border: none; border-radius: 4px; margin-left: 4px;">
+                            Hapus
+                          </button>
+                          {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>                
+                </table>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+
+  <!-- Core JS Files -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = { damping: '0.5' }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+  <script>
+    $(document).ready(function() {
+        $('.delete-user').on('click', function() {
+            const userId = $(this).data('user-id');
+            if (confirm('Anda yakin ingin menghapus pengguna ini?')) {
+                $.ajax({
+                    url: `/proxy/user/delete/${userId}`,
+                    type: 'DELETE',
+                    success: function(result) {
+                        alert(result.message);
+                        window.location.reload();
+                    },
+                    error: function(xhr) {
+                        alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                    }
+                });
+            }
+        });
+    });
+  </script>
+
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>

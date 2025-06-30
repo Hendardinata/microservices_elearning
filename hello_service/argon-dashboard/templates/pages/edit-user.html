@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% include 'pages/header.html' %}
+</head>
+
+<body class="g-sidenav-show   bg-gray-100">
+  <div class="min-height-300 bg-gradient-info position-absolute w-100"></div>
+
+  {% include 'pages/aside.html' %}
+  
+  <main class="main-content position-relative border-radius-lg ">
+
+    <!-- Navbar -->
+    {% include 'pages/navbar.html' %}
+    <!-- End Navbar -->
+    
+    <div class="container-fluid py-4">
+      <div class="row">
+        <div class="col-12">
+          <div class="card mb-4">
+            <div class="card-header pb-0">
+              <h6>Management User</h6>
+            </div>
+            <div class="card-body px-0 pt-0 pb-2">
+              <div class="table-responsive p-0">
+
+                <div class="container-fluid py-4">
+                  <div class="row">
+                    <div class="col-md-8">
+                      <div class="card">
+                        <div class="card-header pb-0">
+                        </div>
+
+                        <div class="card-body">
+                          <p class="text-uppercase text-sm">User Information</p>
+
+                          <form id="edit-user-form" enctype="multipart/form-data">
+                            <!-- Username -->
+                            <div class="form-group">
+                                <label for="username">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" value="{{ user.username }}" {% if session['role'] != 'admin' %}readonly{% endif %} required>
+                            </div>
+
+                            <!-- Nama -->
+                            <div class="form-group">
+                              <label for="nama">Nama</label>
+                              <input type="text" class="form-control" id="nama" name="nama" value="{{ user.nama }}" {% if session['role'] != 'admin' %}readonly{% endif %} required>
+                            </div>
+                        
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" {% if session['role'] != 'admin' %}readonly{% endif %} required>
+                            </div>
+                        
+                            <!-- Role -->
+                            {% if session['role'] == 'admin' %}
+                            <div class="form-group">
+                                <label for="role">Role</label>
+                                <select class="form-control" id="role" name="role" required>
+                                    <option value="" disabled>Select Role</option>
+                                    <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="guru" {% if user.role == 'guru' %}selected{% endif %}>Guru</option>
+                                    <option value="siswa" {% if user.role == 'siswa' %}selected{% endif %}>Siswa</option>
+                                </select>
+                            </div>
+                            {% else %}
+                            <input type="hidden" name="role" value="{{ user.role }}">
+                            {% endif %}
+                        
+                            <!-- Password -->
+                            <div class="form-group">
+                                <label for="password">Password (Leave blank to keep current)</label>
+                                <input type="password" class="form-control" id="password" name="password">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm Password</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password">
+                            </div>
+                        
+                            <!-- Address Fields -->
+                            <div class="form-group">
+                                <label for="alamat">Alamat</label>
+                                <input type="text" class="form-control" id="alamat" name="alamat" value="{{ user.alamat }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="kota">Kota</label>
+                                <input type="text" class="form-control" id="kota" name="kota" value="{{ user.kota }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="negara">Negara</label>
+                                <input type="text" class="form-control" id="negara" name="negara" value="{{ user.negara }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="postal">Postal</label>
+                                <input type="text" class="form-control" id="postal" name="postal" value="{{ user.postal }}">
+                            </div>
+                        
+                            <!-- Phone -->
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="{{ user.phone }}" required>
+                            </div>
+                        
+                            <!-- Foto -->
+                            <div class="form-group">
+                                <label for="foto">Foto</label>
+                                <input type="file" class="form-control" id="foto" name="foto">
+                                {% if user.foto %}
+                                    <img src="{{ user.foto_url }}" alt="User Photo" class="img-fluid img-thumbnail" style="max-width: 100px;">
+                                {% endif %}
+                            </div>
+                        
+                            <!-- Jurusan -->
+                            {% if session['role'] == 'admin' %}
+                            <div class="form-group">
+                                <label for="jurusan_id">Jurusan</label>
+                                <select class="form-control" name="jurusan_id" id="jurusan_id" required>
+                                    <option value="" disabled>Select Jurusan</option>
+                                    {% for jurusan in jurusan_list %}
+                                        <option value="{{ jurusan['_id'] }}" {% if user.jurusan_id == jurusan['_id'] %}selected{% endif %}>
+                                            {{ jurusan['nama_jurusan'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% else %}
+                            <input type="hidden" name="jurusan_id" value="{{ user.jurusan_id }}">
+                            {% endif %}
+                        
+                            <!-- Kelas -->
+                            {% if session['role'] == 'admin' %}
+                            <div class="form-group">
+                                <label for="kelas_id">Kelas</label>
+                                <select class="form-control" name="kelas_id" id="kelas_id" required>
+                                    <option value="" disabled>Select Kelas</option>
+                                    {% for kelas in kelas_list %}
+                                        <option value="{{ kelas['_id'] }}" {% if user.kelas_id == kelas['_id'] %}selected{% endif %}>
+                                            {{ kelas['nama_kelas'] }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% else %}
+                            <input type="hidden" name="kelas_id" value="{{ user.kelas_id }}">
+                            {% endif %}
+                        
+                            <!-- Buttons -->
+                            <div class="col-2 text-start d-flex">
+                                <button type="submit" class="btn bg-gradient-info mb-0 me-2 d-flex align-items-center">
+                                    <i class="fas fa-save"></i>&nbsp;&nbsp;Update
+                                </button>
+                                <a href="/users" class="btn bg-gradient-warning mb-0 d-flex align-items-center">
+                                    <i class="fas fa-times"></i>&nbsp;&nbsp;Cancel
+                                </a>
+                            </div>
+                        </form>                        
+                        
+                          <hr class="horizontal dark">
+                      </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  {% include 'pages/pengaturan.html' %}
+  
+  <!--   Core JS Files   -->
+  <script src="../assets/js/core/popper.min.js"></script>
+  <script src="../assets/js/core/bootstrap.min.js"></script>
+  <script src="../assets/js/plugins/perfect-scrollbar.min.js"></script>
+  <script src="../assets/js/plugins/smooth-scrollbar.min.js"></script>
+  <script>
+    var win = navigator.platform.indexOf('Win') > -1;
+    if (win && document.querySelector('#sidenav-scrollbar')) {
+      var options = {
+        damping: '0.5'
+      }
+      Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+    }
+  </script>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function() {
+        $('#edit-user-form').submit(function(event) {
+            event.preventDefault();
+
+            var formData = new FormData(this);
+
+            $.ajax({
+                type: 'POST',
+                url: '/proxy/user/update/{{ user._id }}',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    alert(response.message);
+                    if (response.redirect_url) {
+                        window.location.href = response.redirect_url;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    alert('Terjadi kesalahan: ' + xhr.responseJSON.message);
+                }
+            });
+        });
+    });
+  </script>
+  <!-- Github buttons -->
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+  <!-- Control Center for Soft Dashboard: parallax effects, scripts for the example pages etc -->
+  <script src="../assets/js/argon-dashboard.min.js?v=2.0.4"></script>
+</body>
+
+</html>
