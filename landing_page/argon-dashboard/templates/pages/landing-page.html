@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>SMA 11 Mataram</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+        body{
+            font-family: Poppins;
+            margin: 0;
+        }
+        a{
+            text-decoration: none;
+            color: #555;
+        }
+        header{
+            width: 1140px;
+            max-width: 80%;
+            margin: auto;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        header a{
+            margin-right: 40px;
+        }
+        .carousel{
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            margin-top: -50px;
+            position: relative;
+            color: #eee;
+        }
+
+        .carousel .list .item{
+            position: absolute;
+            inset: 0 0 0 0;
+        }
+
+        .carousel .list .item img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: brightness(0.8);
+        }
+
+        .carousel .list .item .content{
+            position: absolute;
+            top: 20%;
+            width: 1140px;
+            max-width: 80%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding-right: 30%;
+            box-sizing: border-box;
+            text-shadow: 0 5px 10px #0004;
+        }
+
+        .carousel .list .item .content .author{
+            font-weight: bold;
+            letter-spacing: 5px;
+        }
+
+        .carousel .list .item .content .title,
+        .carousel .list .item .content .topic{
+            font-weight: bold;
+            font-size: 5em;
+            line-height: 1.3em;
+        }
+
+        .carousel .list .item .content .topic{
+            color: #eee;
+        }
+
+        .carousel .list .item .content .buttons{
+            display: grid;
+            grid-template-columns: repeat(2, 130px);
+            grid-template-rows: 40px;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .carousel .list .item .content button{
+            border: none;
+            background-color: white;
+            letter-spacing: 3px;
+            font-family: Poppins;
+            font-weight: 500;
+            border-radius: 20px;
+        }
+
+        .thumbnail{
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            width: max-content;
+            z-index: 100;
+            display: flex;
+            gap: 20px;
+        }
+
+        .thumbnail .item{
+            width: 150px;
+            height: 220px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .thumbnail .item img{
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+        }
+
+        .thumbnail .item .content{
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+        }
+
+        .thumbnail .item .content .title{
+            font-weight: bold;
+        }
+
+        /* Arrows */
+        .arrows{
+            position: absolute;
+            top: 80%;
+            right: 52%;
+            width: 300px;
+            max-width: 30%;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .arrows button{
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #eee4;
+            border: none;
+            font-family: monospace;
+            color: #fff;
+            font-weight: bold;
+            font-size: large;
+            transition: .5s;
+            z-index: 100;
+        }
+
+        .arrows button:hover{
+            background-color: #eee;
+            color: #555;
+        }
+
+        .carousel .list .item:nth-child(1){
+            z-index: 1;
+        }
+
+        .carousel .list .item:nth-child(1) .author,
+        .carousel .list .item:nth-child(1) .title,
+        .carousel .list .item:nth-child(1) .topic,
+        .carousel .list .item:nth-child(1) .desc,
+        .carousel .list .item:nth-child(1) .buttons{
+            transform: translateY(50px);
+            filter: blur(20px);
+            opacity: 0;
+            animation: showContent 0.5s 1s linear 1 forwards; 
+        }
+
+        @keyframes showContent{
+            to{
+                opacity: 1;
+                filter: blur(0);
+                transform: translateY(0);
+            }
+        }
+
+        .carousel .list .item:nth-child(1) .title{
+            animation-delay: 1.2s;
+        }
+
+        .carousel .list .item:nth-child(1) .topic{
+            animation-delay: 1.4s;
+        }
+
+        .carousel .list .item:nth-child(1) .desc{
+            animation-delay: 1.6s;
+        }
+
+        .carousel .list .item:nth-child(1) .buttons{
+            animation-delay: 1.8s;
+        }
+
+        /* effect Next Click */
+        .carousel.next .list .item:nth-child(1) img{
+            width: 150px;
+            height: 220px;
+            position: absolute;
+            left: 50%;
+            bottom: 50px;
+            border-radius: 20px;
+            animation: showImage 0.5s linear 1 forwards;
+        }
+
+        @keyframes showImage{
+            to{
+                width: 100%;
+                height: 100%;
+                left: 0;
+                bottom: 0;
+                border-radius: 0;
+            }
+        }
+
+        .carousel.next .thumbnail .item:nth-child(1){
+            width: 0;
+            overflow: hidden;
+            animation: showThumbnail .5s linear 1 forwards;
+        }
+
+        @keyframes showThumbnail{
+            to{
+                width: 150px;
+            }
+        }
+
+        .carousel.next .thumbnail{
+            transform: translateX(150px);
+            animation: transformThumbnail .5s linear 1 forwards;
+        }
+
+        @keyframes transformThumbnail{
+            to{
+                transform: translateX(0);
+            }
+        }
+
+        /* effect Prev Click */
+        .carousel.prev .list .item:nth-child(2){
+            z-index: 2;
+        }
+
+        .carousel.prev .list .item:nth-child(2) img{
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            animation: outImage 0.5s linear 1 forwards;
+        }
+
+        @keyframes outImage{
+            to{
+                width: 150px;
+                height: 220px;
+                border-radius: 20px;
+                left: 50%;
+                bottom: 50px;
+            }
+        }
+
+        .carousel.prev .thumbnail .item:nth-child(1){
+            width: 0;
+            overflow: hidden;
+            opacity: 0;
+            animation: showThumbnail 0.5s  linear 1 forwards;
+        }
+
+        .carousel.prev .list .item:nth-child(2) .author,
+        .carousel.prev .list .item:nth-child(2) .title,
+        .carousel.prev .list .item:nth-child(2) .topic,
+        .carousel.prev .list .item:nth-child(2) .desc,
+        .carousel.prev .list .item:nth-child(2) .buttons{
+            animation: contentOut 1.5s linear 1 forwards;
+        }
+
+        @keyframes contentOut{
+            to{
+                transform: translateY(-150px);
+                filter: blur(20px);
+                opacity: 0;
+            }
+        }
+
+        .carousel.next .arrows button,
+        .carousel.prev .arrows button{
+            pointer-events: none;
+        }
+
+        /* Time */
+        .time{
+            width: 0%;
+            height: 5px;
+            background-color: #eee;
+            position: absolute;
+            z-index: 100;
+            top: 0;
+            left: 0;
+        }
+
+        .carousel.next .time,
+        .carousel.prev .time{
+            width: 100%;
+            animation: timeRunning 2s linear 1 forwards;
+        }
+
+        @keyframes timeRunning{
+            to{
+                width: 0;
+            }
+        }
+
+        @media screen and (max-width: 678px) {
+            .carousel .list .item .content{
+                padding-right: 0;
+            }
+
+            .carousel .list .item .content .title{
+                font-size: 30px;
+            }
+        }
+
+        /* Animasi tulisan masuk dari bawah */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(50px); /* Mulai dari bawah */
+            transition: all 1s ease-out;
+            will-change: opacity, transform; /* Untuk performa yang lebih baik */
+        }
+
+        /* Ketika elemen di-scroll ke dalam viewport */
+        .fade-in-up.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Delay untuk membuat elemen muncul satu per satu */
+        .fade-in-up:nth-child(1) {
+            transition-delay: 0.1s;
+        }
+        .fade-in-up:nth-child(2) {
+            transition-delay: 0.5s;
+        }
+        .fade-in-up:nth-child(3) {
+            transition-delay: 1s;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <!-- <a href="">Home</a>
+            <a href="">About</a>
+            <a href="">Info</a> -->
+        </nav>
+    </header>
+
+    <!-- Carousel -->
+    <div class="carousel">
+        <div class="list">
+            <div class="item">
+                <img src="./assets/img/banner 1.png">
+                <div class="content">
+                    <div class="author">Selamat Datang di</div>
+                    <div class="title">SMA NEGERI</div>
+                    <div class="topic">11 MATARAM</div>
+                    <div class="desc">SMA Negeri 11 Mataram adalah salah satu sekolah menengah atas di Kota Mataram yang berfokus pada pengembangan akademik dan karakter siswa.</div>
+                    <div class="buttons">
+                        <button>See More</button>
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 2.png">
+                <div class="content">
+                    <div class="author">sma 11 mataram</div>
+                    <div class="title">E - Learning</div>
+                    <div class="topic">Education</div>
+                    <div class="desc">E-Learning SMA 11 Mataram adalah platform pembelajaran daring yang dirancang untuk mendukung proses belajar-mengajar secara modern dan efisien. </div>
+                    <div class="buttons">
+                        <button>See More</button>
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 3.png">
+                <div class="content">
+                    <div class="author">sma 11 mataram</div>
+                    <div class="title">E - Library</div>
+                    <div class="topic">Education</div>
+                    <div class="desc">E-Library SMA 11 Mataram adalah platform digital yang menyediakan akses mudah dan cepat ke berbagai koleksi buku, jurnal, dan materi pembelajaran untuk mendukung kegiatan belajar siswa dan guru.</div>
+                    <div class="buttons">
+                        <button>See More</button>
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 4.png">
+                <div class="content">
+                    <div class="author">sma 11 mataram</div>
+                    <div class="title">E - Rapot</div>
+                    <div class="topic">Education</div>
+                    <div class="desc">E-Rapot SMA 11 Mataram adalah platform digital yang dirancang untuk mempermudah proses pengelolaan dan distribusi laporan hasil belajar siswa.</div>
+                    <div class="buttons">
+                        <button>See More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thumbnaill -->
+        <div class="thumbnail">
+            <div class="item">
+                <img src="./assets/img/banner 1.png">
+                <div class="content">
+                    <div class="title">
+                        sma 11 mataram
+                    </div>
+                    <div class="des">
+                        <!--  -->
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 2.png">
+                <div class="content">
+                    <div class="title">
+                        E - Learning
+                    </div>
+                    <div class="des">
+                        <!-- Lorem ipsum dolor sit amet. -->
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 3.png">
+                <div class="content">
+                    <div class="title">
+                        E - Library
+                    </div>
+                    <div class="des">
+                        <!-- Lorem ipsum dolor sit amet. -->
+                    </div>
+                </div>
+            </div>
+            <div class="item">
+                <img src="./assets/img/banner 4.png">
+                <div class="content">
+                    <div class="title">
+                        E - Rapot
+                    </div>
+                    <div class="des">
+                        <!-- Lorem ipsum dolor sit amet. -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Arrows -->
+        <div class="arrows">
+            <button id="prev"><i class="fas fa-chevron-left"></i></button>
+            <button id="next"><i class="fas fa-chevron-right"></i></button>            
+        </div>
+        <div class="time"></div>
+    </div>
+
+    <main style="background-color: white; padding: 20px;">
+        <div class="container">
+            <!-- Section for Welcome Message -->
+            <div class="text-center">
+                <h1 class="display-4 fade-in-up" style="font-weight: bold; font-size: 3em; line-height: 1.3em;">
+                    Selamat Datang di Website <br>SMA 11 Mataram
+                </h1>
+                <img src="./assets/img/sma-11-mataram.png" alt="" height="300" width="300" class="fade-in-up">
+                <p class="lead fade-in-up">Tempat berkumpulnya informasi seputar kegiatan belajar dan aktivitas di SMA 11 Mataram.</p>
+            </div>
+
+            <hr style="margin: 50px 0;">
+    
+            <!-- Section for Latest News -->
+            <section class="mb-5">
+                <h2 class="text-center mb-4">Berita Terbaru</h2>
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <img src="./assets/img/c-3.jpg" class="card-img-top" alt="News Image 1">
+                            <div class="card-body">
+                                <h5 class="card-title">Kegiatan Belajar Mengajar Dimulai</h5>
+                                <p class="card-text">Pada tanggal 10 September 2024, SMA 11 Mataram memulai kembali kegiatan belajar mengajar secara tatap muka. Kami menghimbau seluruh siswa untuk mematuhi protokol kesehatan.</p>
+                                <a href="#" class="btn btn-primary">Baca Selengkapnya</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <div class="card">
+                            <img src="./assets/img/c-2.jpg" class="card-img-top" alt="News Image 2">
+                            <div class="card-body">
+                                <h5 class="card-title">Pengumuman Libur Nasional</h5>
+                                <p class="card-text">SMA 11 Mataram akan meliburkan kegiatan belajar pada tanggal 17 Agustus 2024 dalam rangka memperingati Hari Kemerdekaan Indonesia.</p>
+                                <a href="#" class="btn btn-primary">Baca Selengkapnya</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+    
+            <!-- Section for Educational Services -->
+            <section class="mb-5" style="cursor: pointer;">
+                <h2 class="text-center mb-4">Layanan Pendidikan</h2>
+                <div class="row">
+                    <div class="col-md-4">
+                    <a href="http://localhost:8000/" class="card-link" style="text-decoration: none; color: black;">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <img src="./assets/img/1.png" alt="E-Learning Icon" class="img-fluid mb-2" style="max-height: 100%;">
+                                <h5 class="card-title">E-Learning</h5>
+                            </div>
+                        </div>
+                    </a>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <img src="./assets/img/2.png" alt="E-Library Icon" class="img-fluid mb-2" style="max-height: 100%;">
+                                <h5 class="card-title">E-Library</h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card text-center border-primary">
+                            <div class="card-body">
+                                <img src="./assets/img/3.png" alt="E-Literasi Icon" class="img-fluid mb-2" style="max-height: 100%;">
+                                <h5 class="card-title">E-Literasi</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+    
+            <!-- Section for School Announcements -->
+            <section>
+                <h2 class="text-center mb-4">Pengumuman Sekolah</h2>
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-bullhorn"></i> Pendaftaran siswa baru untuk tahun ajaran 2024/2025 sudah dibuka.
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-chalkboard-teacher"></i> Workshop Pengembangan Diri untuk kelas 12 akan diadakan pada 20 September 2024.
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <i class="fas fa-calendar-alt"></i> Pengambilan raport akan dilaksanakan pada akhir semester genap, tanggal 25 Desember 2024.
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function truncateText(selector, maxWords) {
+            let element = document.querySelector(selector);
+            let words = element.innerText.split(" ");
+            if (words.length > maxWords) {
+                element.innerText = words.slice(0, maxWords).join(" ") + " . . .";
+            }
+        }
+
+        truncateText(".card-text", 20);
+    </script>
+
+    <script>
+        //step 1: get DOM
+        let nextDom = document.getElementById('next');
+        let prevDom = document.getElementById('prev');
+
+        let carouselDom = document.querySelector('.carousel');
+        let SliderDom = carouselDom.querySelector('.carousel .list');
+        let thumbnailBorderDom = document.querySelector('.carousel .thumbnail');
+        let thumbnailItemsDom = thumbnailBorderDom.querySelectorAll('.item');
+        let timeDom = document.querySelector('.carousel .time');
+
+        thumbnailBorderDom.appendChild(thumbnailItemsDom[0]);
+        let timeRunning = 3000;
+        let timeAutoNext = 7000;
+
+        nextDom.onclick = function(){
+            showSlider('next');    
+        }
+
+        prevDom.onclick = function(){
+            showSlider('prev');    
+        }
+        let runTimeOut;
+        let runNextAuto = setTimeout(() => {
+            next.click();
+        }, timeAutoNext)
+        function showSlider(type){
+            let  SliderItemsDom = SliderDom.querySelectorAll('.carousel .list .item');
+            let thumbnailItemsDom = document.querySelectorAll('.carousel .thumbnail .item');
+            
+            if(type === 'next'){
+                SliderDom.appendChild(SliderItemsDom[0]);
+                thumbnailBorderDom.appendChild(thumbnailItemsDom[0]);
+                carouselDom.classList.add('next');
+            }else{
+                SliderDom.prepend(SliderItemsDom[SliderItemsDom.length - 1]);
+                thumbnailBorderDom.prepend(thumbnailItemsDom[thumbnailItemsDom.length - 1]);
+                carouselDom.classList.add('prev');
+            }
+            clearTimeout(runTimeOut);
+            runTimeOut = setTimeout(() => {
+                carouselDom.classList.remove('next');
+                carouselDom.classList.remove('prev');
+            }, timeRunning);
+
+            clearTimeout(runNextAuto);
+            runNextAuto = setTimeout(() => {
+                next.click();
+            }, timeAutoNext)
+        }
+    </script>
+
+    <script>
+        // Fungsi untuk mengecek apakah elemen ada di viewport
+        function isInViewport(element) {
+            const rect = element.getBoundingClientRect();
+            return (
+                rect.top >= 0 &&
+                rect.left >= 0 &&
+                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+            );
+        }
+
+        // Tambahkan event listener untuk scroll
+        document.addEventListener('scroll', function () {
+            const elements = document.querySelectorAll('.fade-in-up');
+            
+            elements.forEach(element => {
+                if (isInViewport(element)) {
+                    element.classList.add('show');
+                } else {
+                    // Jika elemen keluar dari viewport, animasi disembunyikan lagi
+                    element.classList.remove('show');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
